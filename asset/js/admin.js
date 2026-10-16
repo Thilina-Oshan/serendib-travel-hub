@@ -1,140 +1,179 @@
-/* document.addEventListener("DOMContentLoaded", () => {
-    checkLoginState();
+/* Admin dashboard: generic CRUD driven by the CFG object. Data lives in localStorage. */
+const $ = (s, el = document) => el.querySelector(s);
+const KEY = 'esl_admin_data_v1';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CATS = ['Heritage', 'Beaches', 'Wildlife', 'Hill Country'];
 
-    // Login Form Submit
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+/* ---------- Entity configuration: add a field here and the form + table update ---------- */
+const CFG = {
+    destinations: {
+        label: 'Destinations', one: 'destination', emoji: '🏯', cat: 'cat', name: 'name',
+        fields: [{ k: 'name', l: 'Name', req: 1, w: 6 }, { k: 'cat', l: 'Category', t: 'select', o: CATS, req: 1, w: 6 }, { k: 'loc', l: 'Location', req: 1, w: 6 },
+        { k: 'rating', l: 'Rating (1-5)', t: 'number', min: 1, max: 5, req: 1, w: 6 }, { k: 'desc', l: 'Description', t: 'textarea', req: 1 }, { k: 'photo', l: 'Photo', t: 'photo' }],
+        cols: ['photo', 'name', 'cat', 'loc', 'rating']
+    },
+    experiences: {
+        label: 'Experiences', one: 'experience', emoji: '🍵', name: 'title',
+        fields: [{ k: 'title', l: 'Title', req: 1, w: 8 }, { k: 'icon', l: 'Emoji icon', w: 4, max: 2 }, { k: 'desc', l: 'Description', t: 'textarea', req: 1 }, { k: 'photo', l: 'Photo (optional)', t: 'photo' }],
+        cols: ['photo', 'title', 'icon', 'desc']
+    },
+    gallery: {
+        label: 'Gallery', one: 'photo', emoji: '🖼️', cat: 'cat', name: 'caption',
+        fields: [{ k: 'caption', l: 'Caption', req: 1, w: 8 }, { k: 'cat', l: 'Category', t: 'select', o: CATS, req: 1, w: 4 }, { k: 'photo', l: 'Photo', t: 'photo', req: 1 }],
+        cols: ['photo', 'caption', 'cat']
+    },
+    reviews: {
+        label: 'Testimonials', one: 'testimonial', emoji: '💬', name: 'author',
+        fields: [{ k: 'author', l: 'Traveller name', req: 1, w: 6 }, { k: 'country', l: 'Country', req: 1, w: 6 }, { k: 'rating', l: 'Rating (1-5)', t: 'number', min: 1, max: 5, req: 1, w: 6 }, { k: 'text', l: 'Review', t: 'textarea', req: 1 }],
+        cols: ['author', 'country', 'rating', 'text']
+    }
+};
+const SEED = () => ({
+    destinations: [
+        { name: 'Sigiriya Rock', cat: 'Heritage', loc: 'Central Province', rating: 5, desc: '5th-century rock fortress above the jungle.' },
+        { name: 'Mirissa Beach', cat: 'Beaches', loc: 'Southern Coast', rating: 4, desc: 'Palm-lined sand and whale watching.' },
+        { name: 'Yala National Park', cat: 'Wildlife', loc: 'Southern Province', rating: 5, desc: 'Leopards, elephants and sloth bears.' },
+        { name: 'Ella & Nine Arch Bridge', cat: 'Hill Country', loc: 'Badulla District', rating: 5, desc: 'Hiking and the famous blue train.' }],
+    experiences: [{ title: 'Ceylon tea tasting', icon: '🍵', desc: 'Tour Nuwara Eliya estates and taste at the source.' }, { title: 'Yala safari', icon: '🐆', desc: 'Dawn jeep safari through leopard country.' }],
+    gallery: [], reviews: [{ author: 'Maya & Tom', country: 'UK', rating: 5, text: 'The Ella train was as good as the photos.' }]
+});
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let db = load(), view = 'overview', editId = null, delId = null, photoData = '';
 
-        try {
-            const res = await fetch('../backend/admin/login.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
+function load() {
+    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d) return d; } catch { }
+    const s = SEED(); Object.values(s).forEach(a => a.forEach(r => r.id = uid())); return s;
+}
+function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
+    catch { toast('Storage is full. Delete some photos or use smaller images.'); return false; }
+}
+const toastEl = bootstrap.Toast.getOrCreateInstance('#toast', { delay: 3000 });
+const toast = m => { $('#toastMsg').textContent = m; toastEl.show(); };
+const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-            if (data.success) {
-                sessionStorage.setItem('isAdmin', 'true');
-                checkLoginState();
-            } else {
-                document.getElementById('loginError').textContent = data.message;
-            }
-        } catch (err) {
-            console.error("Login error:", err);
-        }
-    });
+/* ---------- Navigation ---------- */
+function show(v) {
+    view = v; const c = CFG[v];
+    document.querySelectorAll('#sideNav .nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+    $('#viewTitle').textContent = c ? c.label : 'Overview';
+    $('#v-overview').hidden = !!c; $('#v-crud').hidden = !c;
+    bootstrap.Offcanvas.getInstance('#sidebar')?.hide();
+    c ? renderTable() : renderOverview();
+}
+$('#sideNav').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) show(b.dataset.view); });
+document.addEventListener('click', e => { const q = e.target.closest('[data-quick]'); if (q) { show(q.dataset.quick); openForm(); } });
 
-    // Logout Button
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('isAdmin');
-        checkLoginState();
-    });
+/* ---------- Overview ---------- */
+function renderOverview() {
+    const avg = db.destinations.length ? (db.destinations.reduce((a, d) => a + +d.rating, 0) / db.destinations.length).toFixed(1) : '–';
+    const photos = Object.values(db).flat().filter(r => r.photo).length;
+    const stat = (n, l) => `<div class="col-6 col-xl-3"><div class="stat"><b>${n}</b><span>${l}</span></div></div>`;
+    $('#stats').innerHTML = stat(db.destinations.length, 'Destinations') + stat(db.gallery.length, 'Gallery photos') + stat(db.reviews.length, 'Testimonials') + stat(avg, 'Avg. destination rating') + '';
+    const recent = Object.entries(CFG).flatMap(([k, c]) => db[k].map(r => ({ r, c }))).slice(-6).reverse();
+    $('#recent').className = 'list-unstyled mb-0 recent';
+    $('#recent').innerHTML = recent.length ? recent.map(({ r, c }) => `<li>${thumb(r, c)}<div><strong>${esc(r[c.name])}</strong><br><span class="tag">${c.label}</span></div></li>`).join('') : '<li class="text-muted">No entries yet.</li>';
+}
 
-    // Destination Form Submit (Add or Update)
-    document.getElementById('destForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('destId').value;
-        const payload = {
-            id: id ? id : null,
-            name: document.getElementById('destName').value,
-            category: document.getElementById('destCategory').value,
-            best_month: document.getElementById('destMonth').value,
-            image_class: document.getElementById('destImageClass').value,
-            description: document.getElementById('destDesc').value
-        };
-
-        const method = id ? 'PUT' : 'POST';
-        try {
-            const res = await fetch('../backend/admin/destinations_crud.php', {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('destModal')).hide();
-                loadAdminDestinations();
-            }
-        } catch (err) {
-            console.error("Error saving destination:", err);
-        }
-    });
+/* ---------- Table ---------- */
+const thumb = (r, c) => r.photo ? `<img class="thumb" src="${r.photo}" alt="">` : `<div class="thumb" aria-hidden="true">${esc(r.icon || c.emoji)}</div>`;
+function renderTable() {
+    const c = CFG[view], q = $('#search').value.toLowerCase(), f = $('#filterCat').value;
+    const fields = Object.fromEntries(c.fields.map(x => [x.k, x]));
+    $('#thead').innerHTML = '<tr>' + c.cols.map(k => `<th>${k === 'photo' ? 'Photo' : fields[k].l.replace(/ \(.*\)/, '')}</th>`).join('') + '<th class="text-end">Actions</th></tr>';
+    const rows = db[view].filter(r => (!f || r[c.cat] === f) && (!q || JSON.stringify(r).toLowerCase().replace(/data:[^"]*/g, '').includes(q)));
+    $('#tbody').innerHTML = rows.map(r => `<tr>` + c.cols.map(k => {
+        const l = k === 'photo' ? 'Photo' : fields[k].l;
+        const v = k === 'photo' ? thumb(r, c) : k === 'rating' ? `<span class="stars">${stars(+r[k])}</span>` : k === 'cat' ? `<span class="tag">${esc(r[k])}</span>` : `<span class="${k === 'desc' || k === 'text' ? 'text-truncate d-inline-block' : ''}" style="${k === 'desc' || k === 'text' ? 'max-width:260px' : ''}">${esc(r[k])}</span>`;
+        return `<td data-label="${esc(l)}">${v}</td>`;
+    }).join('') + `<td class="act text-end" data-label="Actions"><button class="btn btn-sm btn-outline-success me-1" data-edit="${r.id}">Edit</button><button class="btn btn-sm btn-outline-danger" data-del="${r.id}">Delete</button></td></tr>`).join('');
+    $('#empty').hidden = rows.length > 0;
+    $('#addBtn').textContent = `+ Add ${c.one}`;
+}
+function setupFilter() {
+    const c = CFG[view]; $('#search').value = '';
+    $('#filterWrap').hidden = !c.cat;
+    $('#filterCat').innerHTML = '<option value="">All categories</option>' + CATS.map(x => `<option>${x}</option>`).join('');
+}
+const _show = show; show = v => { _show(v); if (CFG[v]) { setupFilter(); renderTable(); } };
+$('#search').addEventListener('input', () => renderTable());
+$('#filterCat').addEventListener('change', () => renderTable());
+$('#tbody').addEventListener('click', e => {
+    const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
+    if (ed) openForm(ed.dataset.edit);
+    if (dl) { delId = dl.dataset.del; const r = db[view].find(x => x.id === delId); $('#delName').textContent = r[CFG[view].name]; delModal.show(); }
 });
 
-function checkLoginState() {
-    const isAdmin = sessionStorage.getItem('isAdmin');
-    if (isAdmin) {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('dashboardSection').style.display = 'block';
-        loadAdminDestinations();
-    } else {
-        document.getElementById('loginSection').style.display = 'block';
-        document.getElementById('dashboardSection').style.display = 'none';
-    }
-} */
+/* ---------- Add / edit form ---------- */
+const formModal = new bootstrap.Modal('#formModal'), delModal = new bootstrap.Modal('#delModal');
+function openForm(id = null) {
+    const c = CFG[view], rec = id ? db[view].find(r => r.id === id) : {}; editId = id; photoData = rec.photo || '';
+    $('#formTitle').textContent = `${id ? 'Edit' : 'Add'} ${c.one}`;
+    $('#entityForm').classList.remove('was-validated');
+    $('#formBody').innerHTML = c.fields.map(f => {
+        const v = esc(rec[f.k] ?? ''), req = f.req ? 'required' : '', col = `col-12 ${f.w ? 'col-md-' + f.w : ''}`;
+        if (f.t === 'photo') return `<div class="col-12"><label class="form-label">${f.l}</label>
+      <label class="drop d-block" id="drop"><input id="f_photo" type="file" accept="image/*" hidden><span>Drag an image here or <u>choose a file</u></span><small class="d-block text-muted">JPG, PNG or WebP. Resized to 1000px wide automatically.</small></label>
+      <img id="prev" class="photo-prev" alt="Photo preview" ${photoData ? `src="${photoData}"` : 'hidden'}>
+      <button type="button" id="rmPhoto" class="btn btn-sm btn-link text-danger" ${photoData ? '' : 'hidden'}>Remove photo</button>
+      <div id="photoErr" class="text-danger small" hidden>Please add a photo.</div></div>`;
+        const input = f.t === 'select' ? `<select class="form-select" id="f_${f.k}" ${req}><option value="">Choose…</option>${f.o.map(o => `<option ${o === rec[f.k] ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+            : f.t === 'textarea' ? `<textarea class="form-control" id="f_${f.k}" rows="3" ${req}>${v}</textarea>`
+                : `<input class="form-control" id="f_${f.k}" type="${f.t || 'text'}" value="${v}" ${req} ${f.min ? `min="${f.min}" max="${f.max}"` : ''} ${f.t ? '' : f.max ? `maxlength="${f.max * 4}"` : ''}>`;
+        return `<div class="${col}"><label class="form-label" for="f_${f.k}">${f.l}</label>${input}<div class="invalid-feedback">This field is required${f.min ? ' (1 to 5)' : ''}.</div></div>`;
+    }).join('');
+    bindPhoto(); formModal.show();
+}
+$('#addBtn').addEventListener('click', () => openForm());
 
-async function loadAdminDestinations() {
-    try {
-        const res = await fetch('../backend/admin/destinations_crud.php');
-        const data = await res.json();
-        const tbody = document.getElementById('destTableBody');
-        tbody.innerHTML = '';
-
-        data.forEach(item => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${item.id}</td>
-                    <td><strong>${item.name}</strong></td>
-                    <td><span class="badge bg-secondary">${item.category}</span></td>
-                    <td>${item.best_month}</td>
-                    <td><code>${item.image_class}</code></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick='editDestination(${JSON.stringify(item)})'><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDestination(${item.id})"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-    } catch (err) {
-        console.error("Error loading destinations:", err);
-    }
+/* Photo handling: read, downscale on a canvas, keep as a data URL */
+function bindPhoto() {
+    const input = $('#f_photo'); if (!input) return;
+    const drop = $('#drop');
+    const take = file => {
+        if (!file || !file.type.startsWith('image/')) return toast('Please choose an image file.');
+        const rd = new FileReader();
+        rd.onload = () => {
+            const img = new Image(); img.onload = () => {
+                const s = Math.min(1, 1000 / img.width), cv = document.createElement('canvas');
+                cv.width = img.width * s; cv.height = img.height * s; cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+                photoData = cv.toDataURL('image/jpeg', .8); $('#prev').src = photoData; $('#prev').hidden = false; $('#rmPhoto').hidden = false; $('#photoErr').hidden = true;
+            }; img.src = rd.result;
+        };
+        rd.readAsDataURL(file);
+    };
+    input.addEventListener('change', () => take(input.files[0]));
+    ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', e => take(e.dataTransfer.files[0]));
+    $('#rmPhoto').addEventListener('click', () => { photoData = ''; $('#prev').hidden = true; $('#rmPhoto').hidden = true; input.value = ''; });
 }
 
-function resetForm() {
-    document.getElementById('destForm').reset();
-    document.getElementById('destId').value = '';
-    document.getElementById('modalTitle').textContent = 'Add Destination';
-}
+$('#entityForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const c = CFG[view], form = e.target, pf = c.fields.find(f => f.t === 'photo');
+    form.classList.add('was-validated');
+    const needPhoto = pf && pf.req && !photoData; if (needPhoto) $('#photoErr').hidden = false;
+    if (!form.checkValidity() || needPhoto) return;
+    const rec = {}; c.fields.forEach(f => rec[f.k] = f.t === 'photo' ? photoData : f.t === 'number' ? +$('#f_' + f.k).value : $('#f_' + f.k).value.trim());
+    const backup = JSON.stringify(db);
+    if (editId) Object.assign(db[view].find(r => r.id === editId), rec); else db[view].push({ id: uid(), ...rec });
+    if (!save()) { db = JSON.parse(backup); return; }
+    formModal.hide(); toast(`${c.one[0].toUpperCase() + c.one.slice(1)} ${editId ? 'updated' : 'added'}.`); renderTable();
+});
 
-function editDestination(item) {
-    document.getElementById('destId').value = item.id;
-    document.getElementById('destName').value = item.name;
-    document.getElementById('destCategory').value = item.category;
-    document.getElementById('destMonth').value = item.best_month;
-    document.getElementById('destImageClass').value = item.image_class;
-    document.getElementById('destDesc').value = item.description;
-    document.getElementById('modalTitle').textContent = 'Edit Destination';
+/* ---------- Delete ---------- */
+$('#delConfirm').addEventListener('click', () => {
+    db[view] = db[view].filter(r => r.id !== delId); save(); delModal.hide(); toast('Entry deleted.'); renderTable();
+});
 
-    new bootstrap.Modal(document.getElementById('destModal')).show();
-}
-
-async function deleteDestination(id) {
-    if (confirm('Are you sure you want to delete this destination?')) {
-        try {
-            const res = await fetch('../backend/admin/destinations_crud.php', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
-            const result = await res.json();
-            if (result.success) {
-                loadAdminDestinations();
-            }
-        } catch (err) {
-            console.error("Error deleting destination:", err);
-        }
-    }
-}
+/* ---------- Export / reset ---------- */
+$('#exportBtn').addEventListener('click', () => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }));
+    a.download = 'explore-sri-lanka-data.json'; a.click(); URL.revokeObjectURL(a.href);
+});
+$('#resetBtn').addEventListener('click', () => {
+    if (!confirm('Replace all data with the demo set? This cannot be undone.')) return;
+    localStorage.removeItem(KEY); db = load(); save(); show('overview'); toast('Demo data restored.');
+});
+show('overview');
