@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard - Serendib Travel Hub</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-light">
+
+    <!-- LOGIN SECTION -->
+    <!--  <div id="loginSection" class="container mt-5" style="max-width: 400px;">
+        <div class="card shadow border-0 rounded-4">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4 fw-bold text-primary">Admin Login</h3>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+                    <div id="loginError" class="text-danger text-center mt-2 small"></div>
+                </form>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboardSection" class="container-fluid py-4">
+        <div class="row mb-4 align-items-center bg-white shadow-sm p-3 rounded mx-1">
+            <div class="col">
+                <h3 class="mb-0 text-dark fw-bold"><i class="fa-solid fa-gauge text-primary"></i> Admin Dashboard</h3>
+            </div>
+            <div class="col text-end">
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm px-3"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Manage Destinations</h5>
+                <button class="btn btn-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#destModal"
+                    onclick="resetForm()">
+                    <i class="fa-solid fa-plus me-1"></i> Add Destination
+                </button>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Best Month</th>
+                            <th>CSS Class</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="destTableBody">
+                        <!-- Dummy Data Rows -->
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <img src="https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?w=100&auto=format&fit=crop&q=60"
+                                    alt="Sigiriya" style="width: 50px; height: 50px; object-fit: cover;"
+                                    class="rounded">
+                            </td>
+                            <td><strong>Sigiriya Rock Fortress</strong></td>
+                            <td><span class="badge bg-secondary">Heritage</span></td>
+                            <td>January</td>
+                            <td><code>s-sigiriya</code></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"><i
+                                        class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>
+                                <img src="https://images.unsplash.com/photo-1546708973-b339540b5162?w=100&auto=format&fit=crop&q=60"
+                                    alt="Nine Arch Bridge" style="width: 50px; height: 50px; object-fit: cover;"
+                                    class="rounded">
+                            </td>
+                            <td><strong>Nine Arch Bridge, Ella</strong></td>
+                            <td><span class="badge bg-secondary">Hill Country</span></td>
+                            <td>March</td>
+                            <td><code>s-bridge</code></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"><i
+                                        class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>
+                                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100&auto=format&fit=crop&q=60"
+                                    alt="Mirissa Beach" style="width: 50px; height: 50px; object-fit: cover;"
+                                    class="rounded">
+                            </td>
+                            <td><strong>Mirissa Beach</strong></td>
+                            <td><span class="badge bg-secondary">Beaches</span></td>
+                            <td>December</td>
+                            <td><code>s-mirissa</code></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"><i
+                                        class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
+                                <img src="https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=100&auto=format&fit=crop&q=60"
+                                    alt="Yala National Park" style="width: 50px; height: 50px; object-fit: cover;"
+                                    class="rounded">
+                            </td>
+                            <td><strong>Yala National Park</strong></td>
+                            <td><span class="badge bg-secondary">Wildlife</span></td>
+                            <td>February</td>
+                            <td><code>s-yala</code></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"><i
+                                        class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT DESTINATION MODAL -->
+    <div class="modal fade" id="destModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 rounded-4">
+                <!-- Multipart Form for File Upload -->
+                <form id="destForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title fw-bold" id="modalTitle">Add Destination</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="destId" name="id">
+
+                        <div class="mb-3">
+                            <label class="form-label">Destination Name</label>
+                            <input type="text" id="destName" name="name" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select id="destCategory" name="category" class="form-select" required>
+                                <option value="Heritage">Heritage</option>
+                                <option value="Beaches">Beaches</option>
+                                <option value="Wildlife">Wildlife</option>
+                                <option value="Hill Country">Hill Country</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Best Month</label>
+                            <input type="text" id="destMonth" name="best_month" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">CSS Image Class (e.g. s-sigiriya)</label>
+                            <input type="text" id="destImageClass" name="image_class" class="form-control" required>
+                        </div>
+
+                        <!-- FILE CHOOSER FOR IMAGE UPLOAD -->
+                        <div class="mb-3">
+                            <label class="form-label">Select Image File</label>
+                            <input type="file" id="destImage" name="image" class="form-control" accept="image/*">
+                            <small class="text-muted" id="imageHelpText">Choose an image file (JPG, PNG, WEBP)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea id="destDesc" name="description" class="form-control" rows="3"
+                                required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary px-4">Save Destination</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/asset/js/admin.js"></script>
+</body>
+
+</html>
