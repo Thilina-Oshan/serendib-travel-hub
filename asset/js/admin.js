@@ -1,10 +1,9 @@
-/* Admin dashboard: generic CRUD driven by the CFG object. Data lives in localStorage. */
+/* Admin dashboard: CRUD operations driven by PHP backend APIs */
 const $ = (s, el = document) => el.querySelector(s);
-const KEY = 'esl_admin_data_v1';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CATS = ['Heritage', 'Beaches', 'Wildlife', 'Hill Country'];
 
-/* ---------- Entity configuration: add a field here and the form + table update ---------- */
+/* Entity configuration for dynamic form rendering and tables */
 const CFG = {
     destinations: {
         label: 'Destinations', one: 'destination', emoji: '🏯', cat: 'cat', name: 'name',
@@ -28,60 +27,65 @@ const CFG = {
         cols: ['author', 'country', 'rating', 'text']
     }
 };
-const SEED = () => ({
-    destinations: [
-        { name: 'Sigiriya Rock', cat: 'Heritage', loc: 'Central Province', rating: 5, desc: '5th-century rock fortress above the jungle.' },
-        { name: 'Mirissa Beach', cat: 'Beaches', loc: 'Southern Coast', rating: 4, desc: 'Palm-lined sand and whale watching.' },
-        { name: 'Yala National Park', cat: 'Wildlife', loc: 'Southern Province', rating: 5, desc: 'Leopards, elephants and sloth bears.' },
-        { name: 'Ella & Nine Arch Bridge', cat: 'Hill Country', loc: 'Badulla District', rating: 5, desc: 'Hiking and the famous blue train.' }],
-    experiences: [{ title: 'Ceylon tea tasting', icon: '🍵', desc: 'Tour Nuwara Eliya estates and taste at the source.' }, { title: 'Yala safari', icon: '🐆', desc: 'Dawn jeep safari through leopard country.' }],
-    gallery: [], reviews: [{ author: 'Maya & Tom', country: 'UK', rating: 5, text: 'The Ella train was as good as the photos.' }]
-});
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-let db = load(), view = 'overview', editId = null, delId = null, photoData = '';
 
-function load() {
-    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d) return d; } catch { }
-    const s = SEED(); Object.values(s).forEach(a => a.forEach(r => r.id = uid())); return s;
-}
-function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
-    catch { toast('Storage is full. Delete some photos or use smaller images.'); return false; }
-}
+let db = { destinations: [], experiences: [], gallery: [], reviews: [] };
+let view = 'overview', editId = null, delId = null, photoData = '';
+
 const toastEl = bootstrap.Toast.getOrCreateInstance('#toast', { delay: 3000 });
 const toast = m => { $('#toastMsg').textContent = m; toastEl.show(); };
 const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-/* ---------- Navigation ---------- */
+/* Fetch data from PHP backend API */
+async function loadData(entity) {
+    try {
+        const response = await fetch(`../api/${entity}.php`);
+        db[entity] = await response.json();
+    } catch (err) {
+        console.error(`Error loading ${entity}:`, err);
+        toast(`Failed to load ${entity}.`);
+    }
+}
+
+/* Load all entities data */
+async function loadAllData() {
+    for (const key of Object.keys(CFG)) {
+        await loadData(key);
+    }
+    if (view === 'overview') renderOverview();
+    else renderTable();
+}
+
+/* Navigation handler */
 function show(v) {
     view = v; const c = CFG[v];
     document.querySelectorAll('#sideNav .nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === v));
     $('#viewTitle').textContent = c ? c.label : 'Overview';
     $('#v-overview').hidden = !!c; $('#v-crud').hidden = !c;
     bootstrap.Offcanvas.getInstance('#sidebar')?.hide();
-    c ? renderTable() : renderOverview();
+    if (c) { setupFilter(); loadData(v).then(() => renderTable()); }
+    else { loadAllData().then(() => renderOverview()); }
 }
+
 $('#sideNav').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) show(b.dataset.view); });
 document.addEventListener('click', e => { const q = e.target.closest('[data-quick]'); if (q) { show(q.dataset.quick); openForm(); } });
 
-/* ---------- Overview ---------- */
+/* Render dashboard overview statistics */
 function renderOverview() {
     const avg = db.destinations.length ? (db.destinations.reduce((a, d) => a + +d.rating, 0) / db.destinations.length).toFixed(1) : '–';
-    const photos = Object.values(db).flat().filter(r => r.photo).length;
     const stat = (n, l) => `<div class="col-6 col-xl-3"><div class="stat"><b>${n}</b><span>${l}</span></div></div>`;
-    $('#stats').innerHTML = stat(db.destinations.length, 'Destinations') + stat(db.gallery.length, 'Gallery photos') + stat(db.reviews.length, 'Testimonials') + stat(avg, 'Avg. destination rating') + '';
-    const recent = Object.entries(CFG).flatMap(([k, c]) => db[k].map(r => ({ r, c }))).slice(-6).reverse();
-    $('#recent').className = 'list-unstyled mb-0 recent';
-    $('#recent').innerHTML = recent.length ? recent.map(({ r, c }) => `<li>${thumb(r, c)}<div><strong>${esc(r[c.name])}</strong><br><span class="tag">${c.label}</span></div></li>`).join('') : '<li class="text-muted">No entries yet.</li>';
+    $('#stats').innerHTML = stat(db.destinations.length, 'Destinations') + stat(db.gallery.length, 'Gallery photos') + stat(db.reviews.length, 'Testimonials') + stat(avg, 'Avg. destination rating');
+    const recent = Object.entries(CFG).flatMap(([k, c]) => (db[k] || []).map(r => ({ r, c }))).slice(-6).reverse();
+    $('#recent.list-unstyled').innerHTML = recent.length ? recent.map(({ r, c }) => `<li>${thumb(r, c)}<div><strong>${esc(r[c.name])}</strong><br><span class="tag">${c.label}</span></div></li>`).join('') : '<li class="text-muted">No entries yet.</li>';
 }
 
-/* ---------- Table ---------- */
 const thumb = (r, c) => r.photo ? `<img class="thumb" src="${r.photo}" alt="">` : `<div class="thumb" aria-hidden="true">${esc(r.icon || c.emoji)}</div>`;
+
+/* Render data table */
 function renderTable() {
     const c = CFG[view], q = $('#search').value.toLowerCase(), f = $('#filterCat').value;
     const fields = Object.fromEntries(c.fields.map(x => [x.k, x]));
     $('#thead').innerHTML = '<tr>' + c.cols.map(k => `<th>${k === 'photo' ? 'Photo' : fields[k].l.replace(/ \(.*\)/, '')}</th>`).join('') + '<th class="text-end">Actions</th></tr>';
-    const rows = db[view].filter(r => (!f || r[c.cat] === f) && (!q || JSON.stringify(r).toLowerCase().replace(/data:[^"]*/g, '').includes(q)));
+    const rows = (db[view] || []).filter(r => (!f || r[c.cat] === f) && (!q || JSON.stringify(r).toLowerCase().includes(q)));
     $('#tbody').innerHTML = rows.map(r => `<tr>` + c.cols.map(k => {
         const l = k === 'photo' ? 'Photo' : fields[k].l;
         const v = k === 'photo' ? thumb(r, c) : k === 'rating' ? `<span class="stars">${stars(+r[k])}</span>` : k === 'cat' ? `<span class="tag">${esc(r[k])}</span>` : `<span class="${k === 'desc' || k === 'text' ? 'text-truncate d-inline-block' : ''}" style="${k === 'desc' || k === 'text' ? 'max-width:260px' : ''}">${esc(r[k])}</span>`;
@@ -90,43 +94,43 @@ function renderTable() {
     $('#empty').hidden = rows.length > 0;
     $('#addBtn').textContent = `+ Add ${c.one}`;
 }
+
 function setupFilter() {
     const c = CFG[view]; $('#search').value = '';
     $('#filterWrap').hidden = !c.cat;
     $('#filterCat').innerHTML = '<option value="">All categories</option>' + CATS.map(x => `<option>${x}</option>`).join('');
 }
-const _show = show; show = v => { _show(v); if (CFG[v]) { setupFilter(); renderTable(); } };
+
 $('#search').addEventListener('input', () => renderTable());
 $('#filterCat').addEventListener('change', () => renderTable());
 $('#tbody').addEventListener('click', e => {
     const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
     if (ed) openForm(ed.dataset.edit);
-    if (dl) { delId = dl.dataset.del; const r = db[view].find(x => x.id === delId); $('#delName').textContent = r[CFG[view].name]; delModal.show(); }
+    if (dl) { delId = dl.dataset.del; const r = db[view].find(x => x.id == delId); $('#delName').textContent = r[CFG[view].name]; delModal.show(); }
 });
 
-/* ---------- Add / edit form ---------- */
 const formModal = new bootstrap.Modal('#formModal'), delModal = new bootstrap.Modal('#delModal');
+
 function openForm(id = null) {
-    const c = CFG[view], rec = id ? db[view].find(r => r.id === id) : {}; editId = id; photoData = rec.photo || '';
+    const c = CFG[view], rec = id ? db[view].find(r => r.id == id) : {}; editId = id; photoData = rec.photo || '';
     $('#formTitle').textContent = `${id ? 'Edit' : 'Add'} ${c.one}`;
     $('#entityForm').classList.remove('was-validated');
     $('#formBody').innerHTML = c.fields.map(f => {
         const v = esc(rec[f.k] ?? ''), req = f.req ? 'required' : '', col = `col-12 ${f.w ? 'col-md-' + f.w : ''}`;
         if (f.t === 'photo') return `<div class="col-12"><label class="form-label">${f.l}</label>
-      <label class="drop d-block" id="drop"><input id="f_photo" type="file" accept="image/*" hidden><span>Drag an image here or <u>choose a file</u></span><small class="d-block text-muted">JPG, PNG or WebP. Resized to 1000px wide automatically.</small></label>
+      <label class="drop d-block" id="drop"><input id="f_photo" type="file" accept="image/*" hidden><span>Drag an image here or <u>choose a file</u></span><small class="d-block text-muted">JPG, PNG or WebP. Resized automatically.</small></label>
       <img id="prev" class="photo-prev" alt="Photo preview" ${photoData ? `src="${photoData}"` : 'hidden'}>
       <button type="button" id="rmPhoto" class="btn btn-sm btn-link text-danger" ${photoData ? '' : 'hidden'}>Remove photo</button>
       <div id="photoErr" class="text-danger small" hidden>Please add a photo.</div></div>`;
         const input = f.t === 'select' ? `<select class="form-select" id="f_${f.k}" ${req}><option value="">Choose…</option>${f.o.map(o => `<option ${o === rec[f.k] ? 'selected' : ''}>${o}</option>`).join('')}</select>`
             : f.t === 'textarea' ? `<textarea class="form-control" id="f_${f.k}" rows="3" ${req}>${v}</textarea>`
-                : `<input class="form-control" id="f_${f.k}" type="${f.t || 'text'}" value="${v}" ${req} ${f.min ? `min="${f.min}" max="${f.max}"` : ''} ${f.t ? '' : f.max ? `maxlength="${f.max * 4}"` : ''}>`;
-        return `<div class="${col}"><label class="form-label" for="f_${f.k}">${f.l}</label>${input}<div class="invalid-feedback">This field is required${f.min ? ' (1 to 5)' : ''}.</div></div>`;
+                : `<input class="form-control" id="f_${f.k}" type="${f.t || 'text'}" value="${v}" ${req} ${f.min ? `min="${f.min}" max="${f.max}"` : ''}>`;
+        return `<div class="${col}"><label class="form-label" for="f_${f.k}">${f.l}</label>${input}<div class="invalid-feedback">This field is required.</div></div>`;
     }).join('');
     bindPhoto(); formModal.show();
 }
 $('#addBtn').addEventListener('click', () => openForm());
 
-/* Photo handling: read, downscale on a canvas, keep as a data URL */
 function bindPhoto() {
     const input = $('#f_photo'); if (!input) return;
     const drop = $('#drop');
@@ -149,31 +153,58 @@ function bindPhoto() {
     $('#rmPhoto').addEventListener('click', () => { photoData = ''; $('#prev').hidden = true; $('#rmPhoto').hidden = true; input.value = ''; });
 }
 
-$('#entityForm').addEventListener('submit', e => {
+/* Submit form data to PHP API backend (POST for create, PUT for update) */
+$('#entityForm').addEventListener('submit', async e => {
     e.preventDefault();
     const c = CFG[view], form = e.target, pf = c.fields.find(f => f.t === 'photo');
     form.classList.add('was-validated');
     const needPhoto = pf && pf.req && !photoData; if (needPhoto) $('#photoErr').hidden = false;
     if (!form.checkValidity() || needPhoto) return;
-    const rec = {}; c.fields.forEach(f => rec[f.k] = f.t === 'photo' ? photoData : f.t === 'number' ? +$('#f_' + f.k).value : $('#f_' + f.k).value.trim());
-    const backup = JSON.stringify(db);
-    if (editId) Object.assign(db[view].find(r => r.id === editId), rec); else db[view].push({ id: uid(), ...rec });
-    if (!save()) { db = JSON.parse(backup); return; }
-    formModal.hide(); toast(`${c.one[0].toUpperCase() + c.one.slice(1)} ${editId ? 'updated' : 'added'}.`); renderTable();
+
+    const rec = {};
+    c.fields.forEach(f => rec[f.k] = f.t === 'photo' ? photoData : f.t === 'number' ? +$('#f_' + f.k).value : $('#f_' + f.k).value.trim());
+    if (editId) rec.id = editId;
+
+    try {
+        const method = editId ? 'PUT' : 'POST';
+        // Fixed path: changed from '/api/' to '../api/'
+        const response = await fetch(`../api/${view}.php`, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rec)
+        });
+        const result = await response.json();
+        if (result.success) {
+            formModal.hide();
+            toast(`${c.one[0].toUpperCase() + c.one.slice(1)} ${editId ? 'updated' : 'added'}.`);
+            loadData(view).then(() => renderTable());
+        } else {
+            toast('Operation failed.');
+        }
+    } catch (err) {
+        console.error('API Error:', err);
+        toast('Network error connecting to backend.');
+    }
 });
 
-/* ---------- Delete ---------- */
-$('#delConfirm').addEventListener('click', () => {
-    db[view] = db[view].filter(r => r.id !== delId); save(); delModal.hide(); toast('Entry deleted.'); renderTable();
+/* Delete record via PHP API backend */
+$('#delConfirm').addEventListener('click', async () => {
+    try {
+        // Fixed path: changed from '/api/' to '../api/'
+        const response = await fetch(`../api/${view}.php?id=${delId}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (result.success) {
+            delModal.hide();
+            toast('Entry deleted.');
+            loadData(view).then(() => renderTable());
+        } else {
+            toast('Delete failed.');
+        }
+    } catch (err) {
+        console.error('Delete error:', err);
+        toast('Network error.');
+    }
 });
 
-/* ---------- Export / reset ---------- */
-$('#exportBtn').addEventListener('click', () => {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }));
-    a.download = 'explore-sri-lanka-data.json'; a.click(); URL.revokeObjectURL(a.href);
-});
-$('#resetBtn').addEventListener('click', () => {
-    if (!confirm('Replace all data with the demo set? This cannot be undone.')) return;
-    localStorage.removeItem(KEY); db = load(); save(); show('overview'); toast('Demo data restored.');
-});
-show('overview');
+// Initial data load on startup
+loadAllData().then(() => show('overview'));
