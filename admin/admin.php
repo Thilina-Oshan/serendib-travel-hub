@@ -34,6 +34,7 @@
                 <button class="nav-link" data-view="experiences">🍵 Experiences</button>
                 <button class="nav-link" data-view="gallery">🖼️ Gallery</button>
                 <button class="nav-link" data-view="reviews">💬 Testimonials</button>
+                <a class="nav-link text-danger mt-2" href="../index.php">🚪 Log-Out</a>
             </nav>
             <div class="side-foot px-3 mt-auto">
                 <a class="nav-link" href="../index.php" target="_blank">↗ View Live Website</a>
