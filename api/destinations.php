@@ -95,4 +95,3 @@ switch ($method) {
         echo json_encode(['success' => false, 'message' => 'Unsupported request method.']);
         break;
 }
-?>
