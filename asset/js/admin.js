@@ -167,7 +167,6 @@ $('#entityForm').addEventListener('submit', async e => {
 
     try {
         const method = editId ? 'PUT' : 'POST';
-        // Fixed path: changed from '/api/' to '../api/'
         const response = await fetch(`../api/${view}.php`, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
@@ -190,7 +189,6 @@ $('#entityForm').addEventListener('submit', async e => {
 /* Delete record via PHP API backend */
 $('#delConfirm').addEventListener('click', async () => {
     try {
-        // Fixed path: changed from '/api/' to '../api/'
         const response = await fetch(`../api/${view}.php?id=${delId}`, { method: 'DELETE' });
         const result = await response.json();
         if (result.success) {
@@ -206,5 +204,5 @@ $('#delConfirm').addEventListener('click', async () => {
     }
 });
 
-// Initial data load on startup
+/* Initial data load on startup */
 loadAllData().then(() => show('overview'));
