@@ -1,8 +1,8 @@
-/* Explore Sri Lanka: vanilla ES6+ */
+/* Explore Sri Lanka: vanilla ES6+ main script */
 const $ = (s, el = document) => el.querySelector(s);
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-// Function to load dynamic HTML components
+// Function to load dynamic HTML components like navbar and footer
 async function loadComponent(elementId, filePath) {
   try {
     const response = await fetch(filePath);
@@ -26,178 +26,83 @@ document.addEventListener('DOMContentLoaded', () => {
   loadComponent('footer-container', '/include/footer.html');
 });
 
-/* ---------- Data ---------- */
-const DESTS = [
-  {n:'Sigiriya Rock', cat:'Heritage', loc:'Central Province', r:5, e:'🏯', bg:'s-sigiriya', t:'A 5th-century rock fortress rising 200 m above the jungle, with frescoes, mirror wall and sky-high gardens. Climb at sunrise to beat the heat.'},
-  {n:'Kandy & Temple of the Tooth', cat:'Heritage', loc:'Kandy', r:5, e:'🛕', bg:'s-bridge', t:'The last royal capital, centred on a lake and the sacred Temple of the Tooth Relic. Evening puja is the moment to attend.'},
-  {n:'Galle Fort', cat:'Heritage', loc:'Southern Coast', r:4, e:'🏰', bg:'s-mirissa', t:'A Dutch-era fort town on the sea, full of cafés, boutiques and ramparts made for a sunset walk.'},
-  {n:'Mirissa Beach', cat:'Beaches', loc:'Southern Coast', r:4, e:'🏖️', bg:'s-mirissa', t:'Palm-lined sand, relaxed beach bars and whale-watching boats from November to April.'},
-  {n:'Arugam Bay', cat:'Beaches', loc:'Eastern Coast', r:4, e:'🏄', bg:'s-sigiriya', t:'Sri Lanka\'s surf capital. Waves peak from May to September when the south is wet.'},
-  {n:'Yala National Park', cat:'Wildlife', loc:'Southern Province', r:5, e:'🐆', bg:'s-bridge', t:'Leopards, elephants, sloth bears and crocodiles across coastal scrub. Book a dawn jeep safari.'},
-  {n:'Nuwara Eliya', cat:'Hill Country', loc:'Central Highlands', r:4, e:'🍃', bg:'s-bridge', t:'"Little England": cool air, tea estates, waterfalls and Horton Plains nearby.'},
-  {n:'Ella & Nine Arch Bridge', cat:'Hill Country', loc:'Badulla District', r:5, e:'🚂', bg:'s-bridge', t:'Hike Little Adam\'s Peak, then watch the blue train cross the Nine Arch Bridge.'}
-];
-
-const ZONES = [
-  {n:'South & West coast', ex:'Mirissa, Galle, Bentota', best:[11,4], why:'Dry, calm seas'},
-  {n:'East coast', ex:'Arugam Bay, Trincomalee', best:[5,9], why:'Dry, best surf'},
-  {n:'Hill country', ex:'Ella, Nuwara Eliya', best:[1,4], why:'Clearest views, cooler air'},
-  {n:'Cultural triangle', ex:'Sigiriya, Anuradhapura', best:[5,9], why:'Drier, fewer showers'}
-];
-
-const inRange = (m, [a, b]) => a <= b ? m >= a && m <= b : m >= a || m <= b;
-const GALLERY = [['🌅','s-sigiriya',260,'Sunrise over Sigiriya'],['🐘','s-bridge',180,'Elephants at Udawalawe'],['🍵','s-bridge',220,'Tea pickers, Nuwara Eliya'],['🌊','s-mirissa',300,'Mirissa surf break'],['🚂','s-bridge',200,'Blue train to Ella'],['🛕','s-sigiriya',240,'Temple of the Tooth'],['🐋','s-mirissa',190,'Blue whale, Mirissa'],['🏰','s-mirissa',270,'Galle Fort ramparts']];
-const ROUTES = {
-  culture:['Colombo','Sigiriya','Kandy'], nature:['Kandy','Nuwara Eliya','Ella','Yala'], adventure:['Ella','Yala','Arugam Bay','Mirissa']
-};
-const STYLE = {Backpacker:{usd:40,note:'Hostels, tuk-tuks and second-class trains.'}, Family:{usd:120,note:'Family rooms, a private driver, relaxed pacing.'}, Luxury:{usd:300,note:'Boutique villas, private transfers, guided experiences.'}};
-
 /* ---------- Navbar scroll effect ---------- */
-const nav = $('#nav');
-const onScroll = () => {
+window.addEventListener('scroll', () => {
   const navbarEl = $('#nav');
-  if (navbarEl) navbarEl.classList.toggle('scrolled', scrollY > 60);
-};
-addEventListener('scroll', onScroll, {passive:true});
+  if (navbarEl) navbarEl.classList.toggle('scrolled', window.scrollY > 60);
+}, { passive: true });
 
 // Event delegation for dynamically loaded navbar
 document.addEventListener('click', e => {
   if (e.target.matches('.nav-link')) {
     const menuEl = $('#menu');
-    if (menuEl) bootstrap.Collapse.getOrCreateInstance(menuEl, {toggle:false}).hide();
+    if (menuEl) {
+      const bsCollapse = bootstrap.Collapse.getInstance(menuEl);
+      if (bsCollapse) bsCollapse.hide();
+    }
   }
 });
 
-/* ---------- Destinations: render, filter, modal ---------- */
-const modal = new bootstrap.Modal('#infoModal');
-const openModal = (title, meta, text, bg, emoji) => {
-  $('#mTitle').textContent = title; $('#mMeta').textContent = meta; $('#mText').textContent = text;
-  $('#mScene').className = `scene m-scene ${bg}`; $('#mScene').textContent = emoji; modal.show();
-};
-const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
-
-// Render destinations once DOM is fully loaded
+/* ---------- Category Filters Handler ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  const destGrid = $('#destGrid');
-  if (destGrid) {
-    destGrid.innerHTML = DESTS.map((d, i) => `
-      <div class="col-sm-6 col-xl-3 dest-item" data-cat="${d.cat}">
-        <article class="dest"><div class="scene ${d.bg}"><span class="badge rounded-pill">${d.cat}</span>${d.e}</div>
-          <div class="dest-body"><h3>${d.n}</h3><span class="loc">📍 ${d.loc}</span>
-          <span class="stars mb-2" aria-label="${d.r} out of 5">${stars(d.r)}</span>
-          <button class="btn mt-2" data-i="${i}">Explore details</button></div></article></div>`).join('');
-    
-    destGrid.addEventListener('click', e => {
-      const b = e.target.closest('button[data-i]'); if (!b) return;
-      const d = DESTS[b.dataset.i]; openModal(d.n, `${d.cat} · ${d.loc} · ${stars(d.r)}`, d.t, d.bg, d.e);
+  const filterButtons = document.querySelectorAll('#filters button[data-filter]');
+
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons and add to the clicked one
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      const selectedCategory = button.getAttribute('data-filter');
+      const allCards = document.querySelectorAll('.dest-card-wrapper');
+
+      allCards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category');
+
+        // Show card if 'All' is selected or categories match exactly
+        if (selectedCategory === 'All' || cardCategory === selectedCategory) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
     });
-  }
+  });
+});
 
-  const filtersEl = $('#filters');
-  if (filtersEl) {
-    filtersEl.addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (b) filterDests(b.dataset.filter); });
-  }
+/* ---------- Season guide function ---------- */
+const ZONES = [
+  { n: 'South & West coast', ex: 'Mirissa, Galle, Bentota', best: [11, 4], why: 'Dry, calm seas' },
+  { n: 'East coast', ex: 'Arugam Bay, Trincomalee', best: [5, 9], why: 'Dry, best surf' },
+  { n: 'Hill country', ex: 'Ella, Nuwara Eliya', best: [1, 4], why: 'Clearest views, cooler air' },
+  { n: 'Cultural triangle', ex: 'Sigiriya, Anuradhapura', best: [5, 9], why: 'Drier, fewer showers' }
+];
 
-  // Month selects + hero search init
-  const monthOpts = MONTHS.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
-  ['#sMonth', '#monthPick'].forEach(s => { const el = $(s); if (el) el.innerHTML = monthOpts; });
-  const now = new Date().getMonth() + 1;
-  if ($('#sMonth')) $('#sMonth').value = now;
-  if ($('#monthPick')) $('#monthPick').value = now;
-  
-  DESTS.forEach(d => { const sDest = $('#sDest'); if (sDest) sDest.add(new Option(d.n, d.n)); });
-  
-  const searchForm = $('#searchForm');
-  if (searchForm) {
-    searchForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const dest = DESTS.find(d => d.n === $('#sDest').value);
-      filterDests(dest ? dest.cat : ($('#sAct').value || 'All'));
-      if ($('#monthPick') && $('#sMonth')) $('#monthPick').value = $('#sMonth').value;
-      renderSeason();
-      const destSec = $('#destinations');
-      if (destSec) destSec.scrollIntoView();
-    });
-  }
+const inRange = (m, [a, b]) => a <= b ? m >= a && m <= b : m >= a || m <= b;
 
-  // Season guide init
+document.addEventListener('DOMContentLoaded', () => {
   const monthPick = $('#monthPick');
+  const sMonth = $('#sMonth');
+  const monthOpts = MONTHS.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+
+  if (sMonth) sMonth.innerHTML = monthOpts;
+  if (monthPick) monthPick.innerHTML = monthOpts;
+
+  const now = new Date().getMonth() + 1;
+  if (sMonth) sMonth.value = now;
   if (monthPick) {
+    monthPick.value = now;
     monthPick.addEventListener('change', renderSeason);
     renderSeason();
   }
-
-  // Itinerary planner init
-  const daysEl = $('#days');
-  if (daysEl) {
-    daysEl.addEventListener('input', e => { const out = $('#daysOut'); if (out) out.textContent = e.target.value; });
-  }
-
-  const planForm = $('#planForm');
-  if (planForm) {
-    planForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const days = +$('#days').value, style = $('#style').value;
-      const picks = [...document.querySelectorAll('#planForm input[type=checkbox]:checked')].map(c => c.value);
-      const out = $('#planOut');
-      if (!picks.length) { out.innerHTML = '<p class="mb-0 text-danger">Select at least one interest to build a route.</p>'; return; }
-      
-      let stops = [...new Set(['Colombo', ...picks.flatMap(p => ROUTES[p])])];
-      stops = stops.slice(0, Math.max(3, Math.min(stops.length, Math.ceil(days / 2))));
-      const base = Math.floor(days / stops.length); let extra = days % stops.length, day = 1;
-      
-      const rows = stops.map(s => {
-        const n = base + (extra-- > 0 ? 1 : 0);
-        const range = n > 1 ? `Days ${day}-${day + n - 1}` : `Day ${day}`;
-        day += n;
-        return `<div class="stop"><b>${range}</b><span>${s}</span></div>`;
-      }).join('');
-      
-      const s = STYLE[style];
-      out.innerHTML = `<div class="fade-in"><p class="route-line">${stops.join(' → ')}</p>${rows}
-        <p class="mt-3 mb-0"><strong>${style}:</strong> ${s.note} Roughly <strong>$${s.usd * days}</strong> for ${days} days per person (estimate, excludes flights).</p></div>`;
-    });
-  }
-
-  // Gallery render
-  const galleryGrid = $('#galleryGrid');
-  if (galleryGrid) {
-    galleryGrid.innerHTML = GALLERY.map(([e, bg, h, cap], i) =>
-      `<button class="tile" data-g="${i}" aria-label="Enlarge: ${cap}"><div class="scene ${bg}" style="height:${h}px">${e}</div></button>`).join('');
-    
-    galleryGrid.addEventListener('click', e => {
-      const t = e.target.closest('[data-g]'); if (!t) return;
-      const [em, bg, , cap] = GALLERY[t.dataset.g]; openModal(cap, 'Gallery', 'Replace this tile with your own photo by setting --img on the .scene element.', bg, em);
-    });
-  }
-
-  // Footer year & newsletter
-  const yrEl = $('#yr');
-  if (yrEl) yrEl.textContent = new Date().getFullYear();
-
-  const newsForm = $('#newsForm');
-  if (newsForm) {
-    newsForm.addEventListener('submit', e => { 
-      e.preventDefault(); 
-      const newsMsg = $('#newsMsg');
-      if (newsMsg) newsMsg.textContent = 'Subscribed. Check your inbox to confirm.'; 
-      e.target.reset(); 
-    });
-  }
 });
 
-function filterDests(cat) {
-  document.querySelectorAll('#filters .btn-chip').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
-  document.querySelectorAll('.dest-item').forEach(el => el.classList.toggle('hide', cat !== 'All' && el.dataset.cat !== cat));
-}
-
-/* ---------- Season guide function ---------- */
 function renderSeason() {
   const monthPickEl = $('#monthPick');
   if (!monthPickEl) return;
   const m = +monthPickEl.value;
-  const scored = ZONES.map(z => ({...z, ok: inRange(m, z.best)}));
-  
+  const scored = ZONES.map(z => ({ ...z, ok: inRange(m, z.best) }));
+
   const seasonOut = $('#seasonOut');
   if (seasonOut) {
     seasonOut.innerHTML = scored.map(z => `
@@ -205,12 +110,12 @@ function renderSeason() {
         <span class="pill">${z.ok ? 'Best now' : 'Wetter now'}</span><h4>${z.n}</h4>
         <small>${z.ex}</small><div class="mt-1 small">${z.ok ? z.why : 'Expect showers and rougher seas'}</div></div></div>`).join('');
   }
-  
+
   const names = scored.filter(z => z.ok).map(z => z.n);
   const seasonNote = $('#seasonNote');
   if (seasonNote) {
     seasonNote.textContent = names.length
-      ? `In ${MONTHS[m - 1]}, head to: ${names.join(' and ')}. The southwest (Yala/Maha) monsoons run May to September and October to January in the east.`
+      ? `In ${MONTHS[m - 1]}, head to: ${names.join(' and ')}.`
       : 'Every region sees some rain this month; plan indoor stops.';
   }
 }

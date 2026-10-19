@@ -1,3 +1,15 @@
+<?php
+// Database connection
+require_once 'api/db.php';
+
+// Fetch destinations data from the database
+try {
+  $stmt = $pdo->query("SELECT * FROM destinations ORDER BY id DESC");
+  $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+  $destinations = [];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,15 +28,6 @@
 </head>
 
 <body>
-
-<?php
-// Database connection eka include karaganna
-require_once 'api/db.php';
-
-// Destinations data database eken gannawa
-$stmt = $pdo->query("SELECT * FROM destinations");
-$destinations = $stmt->fetchAll();
-?>
 
   <!-- NAVBAR CONTAINER -->
   <div id="navbar-container"></div>
@@ -75,6 +78,8 @@ $destinations = $stmt->fetchAll();
     <div class="container">
       <h2 class="section-title">Top attractions</h2>
       <p class="section-sub">Eight places that show why a small island holds so much.</p>
+
+      <!-- Category Filter Buttons -->
       <div id="filters" class="d-flex flex-wrap gap-2 mb-4" role="group" aria-label="Filter destinations">
         <button class="btn btn-chip active" data-filter="All">All</button>
         <button class="btn btn-chip" data-filter="Heritage">Heritage</button>
@@ -82,10 +87,39 @@ $destinations = $stmt->fetchAll();
         <button class="btn btn-chip" data-filter="Wildlife">Wildlife</button>
         <button class="btn btn-chip" data-filter="Hill Country">Hill Country</button>
       </div>
-      <div id="destGrid" class="row g-4"></div>
+
+      <!-- Destinations Grid loaded dynamically from Database -->
+      <div id="destGrid" class="row g-4">
+        <?php if (!empty($destinations)): ?>
+          <?php foreach ($destinations as $dest): ?>
+            <!-- Ensure data-category matches the exact category string stored in database -->
+            <div class="col-md-6 col-lg-3 dest-card-wrapper" data-category="<?= htmlspecialchars(trim($dest['cat'] ?? 'All')) ?>">
+              <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                <!-- Render photo correctly supporting both Base64 and image paths -->
+                <img src="<?= !empty($dest['photo']) ? htmlspecialchars($dest['photo']) : '/asset/img/default.jpg' ?>"
+                  class="card-img-top"
+                  alt="<?= htmlspecialchars($dest['name'] ?? 'Destination') ?>"
+                  style="height: 200px; object-fit: cover;">
+
+                <div class="card-body d-flex flex-column">
+                  <span class="badge bg-primary w-auto align-self-start mb-2"><?= htmlspecialchars($dest['cat'] ?? 'General') ?></span>
+                  <h5 class="card-title"><?= htmlspecialchars($dest['name'] ?? 'Untitled') ?></h5>
+                  <?php if (!empty($dest['loc'])): ?>
+                    <small class="text-muted mb-2">📍 <?= htmlspecialchars($dest['loc']) ?></small>
+                  <?php endif; ?>
+                  <p class="card-text text-secondary flex-grow-1"><?= htmlspecialchars($dest['description'] ?? '') ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="col-12 text-center">
+            <p class="text-muted">No destinations available at the moment.</p>
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
   </section>
-
   <!-- EXPERIENCES -->
   <section id="experiences" class="py-section band">
     <div class="container">
@@ -95,8 +129,7 @@ $destinations = $stmt->fetchAll();
           <article class="xp">
             <div class="xp-ico">🍵</div>
             <h3>Ceylon tea tasting</h3>
-            <p>Walk the estates around Nuwara Eliya, watch leaves rolled and fired, then taste the result at the source.
-            </p>
+            <p>Walk the estates around Nuwara Eliya, watch leaves rolled and fired, then taste the result at the source.</p>
           </article>
         </div>
         <div class="col-md-6 col-xl-3">
@@ -234,8 +267,14 @@ $destinations = $stmt->fetchAll();
     </div>
   </div>
 
+  <!-- Pass PHP database results into JavaScript window object -->
+  <script>
+    window.dbDestinations = <?php echo json_encode($destinations, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/asset/js/main.js"></script>
 </body>
 
-</html>
+</html>p
