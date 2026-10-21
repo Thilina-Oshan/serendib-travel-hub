@@ -9,6 +9,12 @@ try {
 } catch (PDOException $e) {
   $destinations = [];
 }
+try {
+  $stmt = $pdo->query("SELECT * FROM experiences ORDER BY id DESC");
+  $experiences = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+  $experiences = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,39 +126,32 @@ try {
       </div>
     </div>
   </section>
-  <!-- EXPERIENCES -->
+ <!-- EXPERIENCES -->
   <section id="experiences" class="py-section band">
     <div class="container">
       <h2 class="section-title">Things you can only do here</h2>
       <div class="row g-4 mt-1">
-        <div class="col-md-6 col-xl-3">
-          <article class="xp">
-            <div class="xp-ico">🍵</div>
-            <h3>Ceylon tea tasting</h3>
-            <p>Walk the estates around Nuwara Eliya, watch leaves rolled and fired, then taste the result at the source.</p>
-          </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-          <article class="xp">
-            <div class="xp-ico">🐆</div>
-            <h3>Yala safari</h3>
-            <p>Jeep through dry-zone scrub at dawn. Yala has one of the world's densest leopard populations.</p>
-          </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-          <article class="xp">
-            <div class="xp-ico">🏄</div>
-            <h3>Surfing in Arugam Bay</h3>
-            <p>A long right-hand point break on the east coast, best from May to September.</p>
-          </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-          <article class="xp">
-            <div class="xp-ico">🚂</div>
-            <h3>Scenic train rides</h3>
-            <p>Kandy to Ella is among the world's great rail journeys. Book reserved seats early.</p>
-          </article>
-        </div>
+        <?php if (!empty($experiences)): ?>
+          <?php foreach ($experiences as $exp): ?>
+            <div class="col-md-6 col-xl-3">
+              <article class="xp h-100 d-flex flex-column">
+                <!-- If there's an icon, show it, otherwise show a default emoji or photo -->
+                <div class="xp-ico"><?= !empty($exp['icon']) ? htmlspecialchars($exp['icon']) : '✨' ?></div>
+                <h3 class="card-title"><?= htmlspecialchars($exp['title'] ?? 'Untitled') ?></h3>
+                <p class="text-secondary flex-grow-1"><?= htmlspecialchars($exp['description'] ?? '') ?></p>
+                
+                <!-- Optional: If you want to show photo if available -->
+                <?php if (!empty($exp['photo'])): ?>
+                  <img src="<?= htmlspecialchars($exp['photo']) ?>" alt="Experience photo" class="img-fluid rounded mt-2" style="height: 120px; object-fit: cover;">
+                <?php endif; ?>
+              </article>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="col-12 text-center">
+            <p class="text-muted">No experiences available at the moment.</p>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
   </section>
