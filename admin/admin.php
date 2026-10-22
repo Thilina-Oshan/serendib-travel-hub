@@ -1,5 +1,11 @@
 <?php
-// Initialize session or security checks here if needed in the future
+session_start();
+
+// Redirect non-logged-in admin to login page.
+if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
+    header("Location: ../loging/loging.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -126,7 +126,7 @@ try {
       </div>
     </div>
   </section>
- <!-- EXPERIENCES -->
+  <!-- EXPERIENCES -->
   <section id="experiences" class="py-section band">
     <div class="container">
       <h2 class="section-title">Things you can only do here</h2>
@@ -138,8 +138,10 @@ try {
                 <!-- If there's an icon, show it, otherwise show a default emoji or photo -->
                 <div class="xp-ico"><?= !empty($exp['icon']) ? htmlspecialchars($exp['icon']) : '✨' ?></div>
                 <h3 class="card-title"><?= htmlspecialchars($exp['title'] ?? 'Untitled') ?></h3>
-                <p class="text-secondary flex-grow-1"><?= htmlspecialchars($exp['description'] ?? '') ?></p>
-                
+                <p class="text-secondary flex-grow-1">
+                  <?= nl2br(htmlspecialchars($exp['description'] ?? '')) ?>
+                </p>
+
                 <!-- Optional: If you want to show photo if available -->
                 <?php if (!empty($exp['photo'])): ?>
                   <img src="<?= htmlspecialchars($exp['photo']) ?>" alt="Experience photo" class="img-fluid rounded mt-2" style="height: 120px; object-fit: cover;">
