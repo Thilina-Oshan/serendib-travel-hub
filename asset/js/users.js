@@ -137,6 +137,42 @@
     $('#bookDone').addEventListener('click', e => { if (e.target.id === 'again') { bf.reset(); bf.classList.remove('was-validated'); bf.hidden = false; $('#bookDone').hidden = true; prefill(); upd(); } });
 
 
+    // Get elements for start date, end date, and days input
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const daysInput = document.getElementById('bDays');
+
+    // Function to calculate the number of days between start and end date
+    function calculateDays() {
+        const startVal = startDateInput.value;
+        const endVal = endDateInput.value;
+
+        if (startVal && endVal) {
+            const startDate = new Date(startVal);
+            const endDate = new Date(endVal);
+
+            // Calculate difference in milliseconds and convert to days
+            const diffTime = endDate - startDate;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays >= 0) {
+                // Set days value (+1 if inclusive of the start date)
+                daysInput.value = diffDays + 1;
+
+                // Trigger input event so the total price updates automatically
+                daysInput.dispatchEvent(new Event('input'));
+            } else {
+                daysInput.value = ''; // Clear if end date is before start date
+                alert("End date must be after Start date.");
+            }
+        }
+    }
+
+    // Attach event listeners to both date inputs
+    if (startDateInput && endDateInput && daysInput) {
+        startDateInput.addEventListener('change', calculateDays);
+        endDateInput.addEventListener('change', calculateDays);
+    }
 
     /* ---------- My bookings ---------- */
 
@@ -247,3 +283,6 @@
 
     route();
 })();
+
+/* Start date and End date fill and auto fill Days Field */
+
