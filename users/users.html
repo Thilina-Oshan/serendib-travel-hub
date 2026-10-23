@@ -32,8 +32,8 @@
                     <a class="nav-link" href="#reviews" data-view="reviews">⭐ My reviews</a>
                     <a class="nav-link" href="#profile" data-view="profile">👤 Profile</a>
                 </nav>
-                <div class="side-foot px-3 mt-auto"><a class="nav-link" href="#s" target="_blank"
-                        rel="noopener">↗ View website</a></div>
+                <div class="side-foot px-3 mt-auto"><a class="nav-link" href="#s" target="_blank" rel="noopener">↗ View
+                        website</a></div>
             </div>
         </aside>
         <div class="main">
@@ -64,30 +64,44 @@
                                     autocomplete="name">
                                 <div class="invalid-feedback">Enter your name.</div>
                             </div>
+
                             <div class="col-md-6"><label class="form-label" for="bEmail">Email</label><input id="bEmail"
                                     name="email" type="email" class="form-control" required autocomplete="email">
                                 <div class="invalid-feedback">Enter a valid email.</div>
                             </div>
+
                             <div class="col-md-6"><label class="form-label" for="bPhone">Phone / WhatsApp</label><input
                                     id="bPhone" name="phone" type="tel" class="form-control" required
                                     pattern="[0-9+\-\s()]{7,20}" autocomplete="tel">
                                 <div class="invalid-feedback">Enter a valid phone number.</div>
                             </div>
+                            
                             <div class="col-md-6"><label class="form-label" for="bDest">Destination or
                                     package</label><select id="bDest" name="dest" class="form-select" required>
                                     <option value="">Choose…</option>
                                 </select>
                                 <div class="invalid-feedback">Choose a destination.</div>
                             </div>
-                            <div class="col-6 col-md-3"><label class="form-label" for="bDate">Start date</label><input
-                                    id="bDate" name="date" type="date" class="form-control" required>
+
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="startDate">Start date</label>
+                                <input id="startDate" name="date" type="date" class="form-control" required>
                                 <div class="invalid-feedback">Pick a future date.</div>
                             </div>
-                            <div class="col-6 col-md-3"><label class="form-label" for="bDays">Days</label><input
-                                    id="bDays" name="days" type="number" class="form-control" min="1" max="30" value="7"
-                                    required>
+
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="endDate">End date</label>
+                                <input id="endDate" name="endDate" type="date" class="form-control" required>
+                                <div class="invalid-feedback">Pick a future date.</div>
+                            </div>
+
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="bDays">Days</label>
+                                <input id="bDays" name="days" type="number" class="form-control" min="1" max="30"
+                                    value="7" required>
                                 <div class="invalid-feedback">1 to 30 days.</div>
                             </div>
+
                             <div class="col-6 col-md-3"><label class="form-label" for="bGuests">Guests</label><input
                                     id="bGuests" name="guests" type="number" class="form-control" min="1" max="20"
                                     value="2" required>
