@@ -154,69 +154,69 @@ document.addEventListener('DOMContentLoaded', () => {
             : '<li class="text-muted">No entries yet.</li>';
     }
 
-  
-function renderTable() {
-    const c = CFG[view];
-    if (!c) return;
 
-    const q = $('#search').value.trim().toLowerCase();
-    const f = $('#filterCat').value;
+    function renderTable() {
+        const c = CFG[view];
+        if (!c) return;
 
-    const fields = Object.fromEntries(
-        c.fields.map(field => [field.k, field])
-    );
+        const q = $('#search').value.trim().toLowerCase();
+        const f = $('#filterCat').value;
 
-    // Table Header
-    $('#thead').innerHTML = '<tr>' + c.cols.map(key =>
-        `<th>${esc(
-            key === 'photo'
-                ? 'Photo'
-                : fields[key].l.replace(/\s*\(.*\)/, '')
-        )}</th>`
-    ).join('') + '<th class="text-end">Actions</th></tr>';
+        const fields = Object.fromEntries(
+            c.fields.map(field => [field.k, field])
+        );
 
-    // Filter Records
-    const rows = (db[view] || []).filter(record =>
-        (!f || record[c.cat] === f) &&
-        (!q || JSON.stringify(record).toLowerCase().includes(q))
-    );
+        // Table Header
+        $('#thead').innerHTML = '<tr>' + c.cols.map(key =>
+            `<th>${esc(
+                key === 'photo'
+                    ? 'Photo'
+                    : fields[key].l.replace(/\s*\(.*\)/, '')
+            )}</th>`
+        ).join('') + '<th class="text-end">Actions</th></tr>';
 
-    // Render Table Body
-    $('#tbody').innerHTML = rows.map(record =>
-        '<tr>' + c.cols.map(key => {
+        // Filter Records
+        const rows = (db[view] || []).filter(record =>
+            (!f || record[c.cat] === f) &&
+            (!q || JSON.stringify(record).toLowerCase().includes(q))
+        );
 
-            const label = key === 'photo'
-                ? 'Photo'
-                : fields[key].l;
+        // Render Table Body
+        $('#tbody').innerHTML = rows.map(record =>
+            '<tr>' + c.cols.map(key => {
 
-            // FIX: Support both desc and description
-            const fieldValue = key === 'desc'
-                ? (record.desc ?? record.description ?? '')
-                : (record[key] ?? '');
+                const label = key === 'photo'
+                    ? 'Photo'
+                    : fields[key].l;
 
-            let value;
+                // FIX: Support both desc and description
+                const fieldValue = key === 'desc'
+                    ? (record.desc ?? record.description ?? '')
+                    : (record[key] ?? '');
 
-            if (key === 'photo') {
+                let value;
 
-                value = thumb(record, c);
+                if (key === 'photo') {
 
-            } else if (key === 'rating') {
+                    value = thumb(record, c);
 
-                value = `<span class="stars">
+                } else if (key === 'rating') {
+
+                    value = `<span class="stars">
                     ${stars(fieldValue)}
                 </span>`;
 
-            } else if (key === 'cat') {
+                } else if (key === 'cat') {
 
-                value = `<span class="tag">
+                    value = `<span class="tag">
                     ${esc(fieldValue)}
                 </span>`;
 
-            } else {
+                } else {
 
-                const long = key === 'desc' || key === 'text';
+                    const long = key === 'desc' || key === 'text';
 
-                value = `
+                    value = `
                     <span
                         class="${long ? 'text-truncate d-inline-block' : ''}"
                         ${long ? 'style="max-width:260px"' : ''}
@@ -224,17 +224,17 @@ function renderTable() {
                         ${esc(fieldValue)}
                     </span>
                 `;
-            }
+                }
 
-            return `
+                return `
                 <td data-label="${esc(label)}">
                     ${value}
                 </td>
             `;
 
-        }).join('') +
+            }).join('') +
 
-        `<td class="act text-end" data-label="Actions">
+            `<td class="act text-end" data-label="Actions">
             <button
                 class="btn btn-sm btn-outline-success me-1"
                 data-edit="${esc(record.id)}">
@@ -248,12 +248,12 @@ function renderTable() {
             </button>
         </td></tr>`
 
-    ).join('');
+        ).join('');
 
-    $('#empty').hidden = rows.length > 0;
+        $('#empty').hidden = rows.length > 0;
 
-    $('#addBtn').textContent = `+ Add ${c.one}`;
-}
+        $('#addBtn').textContent = `+ Add ${c.one}`;
+    }
 
     function setupFilter() {
         const c = CFG[view];
