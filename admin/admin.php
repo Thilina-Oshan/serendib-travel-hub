@@ -40,6 +40,7 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
                 <button class="nav-link" data-view="experiences">🍵 Experiences</button>
                 <button class="nav-link" data-view="gallery">🖼️ Gallery</button>
                 <button class="nav-link" data-view="reviews">💬 Testimonials</button>
+                <button class="nav-link" data-view="requests">📝 Client Request</button>
                 <a class="nav-link text-danger mt-2" href="../index.php">🚪 Log-Out</a>
             </nav>
             <div class="side-foot px-3 mt-auto">

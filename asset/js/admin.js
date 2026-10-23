@@ -50,10 +50,23 @@ const CFG = {
             { k: 'text', l: 'Review', t: 'textarea', req: 1 }
         ],
         cols: ['author', 'country', 'rating', 'text']
+    },
+
+    requests: {
+        label: 'Client Requests', one: 'request', emoji: '📝', name: 'name',
+        fields: [
+            { k: 'name', l: 'Client Name', req: 1, w: 6 },
+            { k: 'email', l: 'Email', req: 1, w: 6 },
+            { k: 'phone', l: 'Phone', req: 1, w: 6 },
+            { k: 'destination', l: 'Destination / Package', req: 1, w: 6 },
+            { k: 'date', l: 'Travel Date', t: 'date', req: 1, w: 6 },
+            { k: 'status', l: 'Status', t: 'select', o: ['Pending', 'Confirmed', 'Cancelled'], req: 1, w: 6 }
+        ],
+        cols: ['name', 'phone', 'destination', 'date', 'status']
     }
 };
 
-let db = { destinations: [], experiences: [], gallery: [], reviews: [] };
+let db = { destinations: [], experiences: [], gallery: [], reviews: [], requests: [] };
 let view = 'overview';
 let editId = null;
 let delId = null;
@@ -189,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? 'Photo'
                     : fields[key].l;
 
-                // FIX: Support both desc and description
+                // Support both desc and description
                 const fieldValue = key === 'desc'
                     ? (record.desc ?? record.description ?? '')
                     : (record[key] ?? '');
@@ -197,63 +210,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 let value;
 
                 if (key === 'photo') {
-
                     value = thumb(record, c);
-
                 } else if (key === 'rating') {
-
-                    value = `<span class="stars">
-                    ${stars(fieldValue)}
-                </span>`;
-
+                    value = `<span class="stars">${stars(fieldValue)}</span>`;
                 } else if (key === 'cat') {
-
-                    value = `<span class="tag">
-                    ${esc(fieldValue)}
-                </span>`;
-
+                    value = `<span class="tag">${esc(fieldValue)}</span>`;
+                } else if (key === 'status') {
+                    const badgeClass = fieldValue === 'Confirmed' ? 'bg-success' : fieldValue === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark';
+                    value = `<span class="badge ${badgeClass}">${esc(fieldValue)}</span>`;
                 } else {
-
                     const long = key === 'desc' || key === 'text';
-
-                    value = `
-                    <span
-                        class="${long ? 'text-truncate d-inline-block' : ''}"
-                        ${long ? 'style="max-width:260px"' : ''}
-                    >
-                        ${esc(fieldValue)}
-                    </span>
-                `;
+                    value = `<span class="${long ? 'text-truncate d-inline-block' : ''}" ${long ? 'style="max-width:260px"' : ''}>${esc(fieldValue)}</span>`;
                 }
 
-                return `
-                <td data-label="${esc(label)}">
-                    ${value}
-                </td>
-            `;
+                return `<td data-label="${esc(label)}">${value}</td>`;
 
             }).join('') +
 
+            // Action buttons (Includes Accept & Decline buttons specifically for client requests view)
             `<td class="act text-end" data-label="Actions">
-            <button
-                class="btn btn-sm btn-outline-success me-1"
-                data-edit="${esc(record.id)}">
-                Edit
-            </button>
-
-            <button
-                class="btn btn-sm btn-outline-danger"
-                data-del="${esc(record.id)}">
-                Delete
-            </button>
-        </td></tr>`
+                ${view === 'requests' ? `
+                    <button class="btn btn-sm btn-success me-1" data-status-action="Confirmed" data-id="${esc(record.id)}">Accept</button>
+                    <button class="btn btn-sm btn-warning me-1" data-status-action="Cancelled" data-id="${esc(record.id)}">Decline</button>
+                ` : ''}
+                <button class="btn btn-sm btn-outline-success me-1" data-edit="${esc(record.id)}">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" data-del="${esc(record.id)}">Delete</button>
+            </td></tr>`
 
         ).join('');
 
         $('#empty').hidden = rows.length > 0;
-
         $('#addBtn').textContent = `+ Add ${c.one}`;
     }
+
+    // Handle quick Accept / Decline status updates for client requests
+    $('#tbody').addEventListener('click', async event => {
+        const actionBtn = event.target.closest('[data-status-action]');
+        if (actionBtn) {
+            const id = actionBtn.dataset.id;
+            const newStatus = actionBtn.dataset.statusAction;
+            const record = db[view].find(item => String(item.id) === String(id));
+            if (!record) return;
+
+            const updatedRecord = { ...record, status: newStatus };
+
+            try {
+                const result = await api(view, {
+                    method: 'PUT',
+                    body: JSON.stringify(updatedRecord)
+                });
+                if (result.success) {
+                    toast(`Request ${newStatus.toLowerCase()} successfully.`);
+                    await loadData(view);
+                    renderTable();
+                } else {
+                    toast(result.message || 'Failed to update status.');
+                }
+            } catch (error) {
+                console.error('Status update error:', error);
+                toast('Could not update status.');
+            }
+        }
+    });
 
     function setupFilter() {
         const c = CFG[view];
