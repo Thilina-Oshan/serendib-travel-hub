@@ -16,13 +16,15 @@
     <div id="app">
         <aside id="sidebar" class="offcanvas-lg offcanvas-start sidebar" tabindex="-1"
             aria-label="Dashboard navigation">
-            <div class="offcanvas-header d-lg-none"><span class="brand">Explore Sri Lanka 🇱🇰</span><button
-                    class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
-                    aria-label="Close"></button></div>
+            <div class="offcanvas-header d-lg-none">
+                <span class="brand">Explore Sri Lanka 🇱🇰</span>
+                <button class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
+                    aria-label="Close"></button>
+            </div>
             <div class="offcanvas-body flex-column p-0">
-                <a class="brand d-none d-lg-block" href="#">Explore Sri Lanka 🇱🇰<small>My
-                        dashboard</small></a>
-                <div class="who px-3 mt-3"><span class="avatar" id="uAvatar"></span>
+                <a class="brand d-none d-lg-block" href="#">Explore Sri Lanka 🇱🇰<small>My dashboard</small></a>
+                <div class="who px-3 mt-3">
+                    <span class="avatar" id="uAvatar"></span>
                     <div><strong id="uName"></strong><small id="uEmail" class="d-block"></small></div>
                 </div>
                 <nav id="sideNav" class="nav flex-column px-3 mt-3">
@@ -32,15 +34,20 @@
                     <a class="nav-link" href="#reviews" data-view="reviews">⭐ My reviews</a>
                     <a class="nav-link" href="#profile" data-view="profile">👤 Profile</a>
                 </nav>
-                <div class="side-foot px-3 mt-auto"><a class="nav-link" href="#s" target="_blank" rel="noopener">↗ View
-                        website</a></div>
+                <div class="side-foot px-3 mt-auto">
+                    <a class="nav-link" href="#s" target="_blank" rel="noopener">↗ View website</a>
+                </div>
             </div>
         </aside>
+
         <div class="main">
-            <header class="topbar"><button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas"
-                    data-bs-target="#sidebar" aria-label="Open menu">☰</button>
-                <h1 id="viewTitle">Overview</h1><a href="#book" class="btn btn-cta ms-auto">+ Book a tour</a>
+            <header class="topbar">
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+                    aria-label="Open menu">☰</button>
+                <h1 id="viewTitle">Overview</h1>
+                <a href="#book" class="btn btn-cta ms-auto">+ Book a tour</a>
             </header>
+
             <main class="content">
                 <section data-v="overview">
                     <div class="panel hello mb-3">
@@ -50,34 +57,38 @@
                     <div id="stats" class="row g-3 mb-3"></div>
                     <div class="panel">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h2 class="m-0">Recent bookings</h2><a href="#bookings">View all</a>
+                            <h2 class="m-0">Recent bookings</h2>
+                            <a href="#bookings">View all</a>
                         </div>
                         <div id="recent"></div>
                     </div>
                 </section>
+
                 <section data-v="book" hidden>
                     <div class="panel">
                         <div id="bookDone" hidden></div>
                         <form id="bookForm" class="row g-3" novalidate>
-                            <div class="col-md-6"><label class="form-label" for="bName">Full name</label><input
-                                    id="bName" name="name" class="form-control" required minlength="2"
-                                    autocomplete="name">
-                                <div class="invalid-feedback">Enter your name.</div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label" for="bName">Full name</label>
+                                <input id="bName" name="name" class="form-control" required minlength="2">
                             </div>
 
-                            <div class="col-md-6"><label class="form-label" for="bEmail">Email</label><input id="bEmail"
-                                    name="email" type="email" class="form-control" required autocomplete="email">
-                                <div class="invalid-feedback">Enter a valid email.</div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="bEmail">Email</label>
+                                <input id="bEmail" name="email" type="email" class="form-control" required>
                             </div>
 
-                            <div class="col-md-6"><label class="form-label" for="bPhone">Phone / WhatsApp</label><input
-                                    id="bPhone" name="phone" type="tel" class="form-control" required
+                            <div class="col-md-6">
+                                <label class="form-label" for="bPhone">Phone / WhatsApp</label>
+                                <input id="bPhone" name="phone" type="tel" class="form-control" required
                                     pattern="[0-9+\-\s()]{7,20}" autocomplete="tel">
                                 <div class="invalid-feedback">Enter a valid phone number.</div>
                             </div>
-                            
-                            <div class="col-md-6"><label class="form-label" for="bDest">Destination or
-                                    package</label><select id="bDest" name="dest" class="form-select" required>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="bDest">Destination or package</label>
+                                <select id="bDest" name="dest" class="form-select" required>
                                     <option value="">Choose…</option>
                                 </select>
                                 <div class="invalid-feedback">Choose a destination.</div>
@@ -97,65 +108,86 @@
 
                             <div class="col-6 col-md-3">
                                 <label class="form-label" for="bDays">Days</label>
+                                <!-- Removed value="7" to keep it blank by default -->
                                 <input id="bDays" name="days" type="number" class="form-control" min="1" max="30"
-                                    value="7" required>
+                                    required>
                                 <div class="invalid-feedback">1 to 30 days.</div>
                             </div>
 
-                            <div class="col-6 col-md-3"><label class="form-label" for="bGuests">Guests</label><input
-                                    id="bGuests" name="guests" type="number" class="form-control" min="1" max="20"
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="bGuests">Guests</label>
+                                <input id="bGuests" name="guests" type="number" class="form-control" min="1" max="20"
                                     value="2" required>
                                 <div class="invalid-feedback">1 to 20 guests.</div>
                             </div>
-                            <div class="col-6 col-md-3"><label class="form-label" for="bStyle">Style</label><select
-                                    id="bStyle" name="style" class="form-select">
+
+                            <div class="col-6 col-md-3">
+                                <label class="form-label" for="bStyle">Style</label>
+                                <select id="bStyle" name="style" class="form-select">
                                     <option>Backpacker</option>
                                     <option selected>Family</option>
                                     <option>Luxury</option>
-                                </select></div>
-                            <div class="col-12"><label class="form-label" for="bNotes">Special requests
-                                    (optional)</label><textarea id="bNotes" name="notes" class="form-control"
-                                    rows="2"></textarea></div>
-                            <div class="col-md-6">
-                                <div class="estimate"><small>Estimated total (excludes flights)</small><b
-                                        id="estTotal">$0</b></div>
+                                </select>
                             </div>
-                            <div class="col-md-6 d-grid align-items-end"><button class="btn btn-cta btn-lg">Request
-                                    booking</button></div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="bNotes">Special requests (optional)</label>
+                                <textarea id="bNotes" name="notes" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="estimate">
+                                    <small>Estimated total (excludes flights)</small>
+                                    <b id="estTotal">$0</b>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 d-grid align-items-end">
+                                <button class="btn btn-cta btn-lg">Request booking</button>
+                            </div>
                         </form>
                     </div>
                 </section>
+
                 <section data-v="bookings" hidden>
                     <div class="panel">
                         <div class="row g-2 mb-3">
-                            <div class="col-sm-7 col-lg-5"><input id="bkSearch" type="search" class="form-control"
-                                    placeholder="Search by destination or reference" aria-label="Search bookings"></div>
-                            <div class="col-sm-5 col-lg-3"><select id="bkFilter" class="form-select"
-                                    aria-label="Filter by status">
+                            <div class="col-sm-7 col-lg-5">
+                                <input id="bkSearch" type="search" class="form-control"
+                                    placeholder="Search by destination or reference" aria-label="Search bookings">
+                            </div>
+                            <div class="col-sm-5 col-lg-3">
+                                <select id="bkFilter" class="form-select" aria-label="Filter by status">
                                     <option value="">All statuses</option>
                                     <option>Pending</option>
                                     <option>Confirmed</option>
                                     <option>Cancelled</option>
-                                </select></div>
+                                </select>
+                            </div>
                         </div>
                         <div id="bkList"></div>
                     </div>
                 </section>
+
                 <section data-v="reviews" hidden>
                     <div class="panel">
-                        <div class="text-end mb-3"><button class="btn btn-cta" id="addRv">+ Write a review</button>
+                        <div class="text-end mb-3">
+                            <button class="btn btn-cta" id="addRv">+ Write a review</button>
                         </div>
                         <div id="rvList"></div>
                     </div>
                 </section>
+
                 <section data-v="profile" hidden>
                     <div class="row g-3">
                         <div class="col-lg-6">
                             <form id="nameForm" class="panel">
-                                <h2>Your details</h2><label class="form-label" for="pName">Full name</label><input
-                                    id="pName" class="form-control mb-3" required minlength="2"><label
-                                    class="form-label" for="pEmail">Email</label><input id="pEmail"
-                                    class="form-control mb-3" disabled><button class="btn btn-cta">Save name</button>
+                                <h2>Your details</h2>
+                                <label class="form-label" for="pName">Full name</label>
+                                <input id="pName" class="form-control mb-3" required minlength="2">
+                                <label class="form-label" for="pEmail">Email</label>
+                                <input id="pEmail" class="form-control mb-3" disabled>
+                                <button class="btn btn-cta">Save name</button>
                             </form>
                         </div>
                     </div>
@@ -163,40 +195,52 @@
             </main>
         </div>
     </div>
+
+    <!-- Review Modal -->
     <div class="modal fade" id="rvModal" tabindex="-1" aria-labelledby="rvModalT" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form id="rvForm" class="modal-content" novalidate>
                 <div class="modal-header">
-                    <h2 class="modal-title fs-4" id="rvModalT">Write a review</h2><button type="button"
-                        class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h2 class="modal-title fs-4" id="rvModalT">Write a review</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body row g-3">
-                    <div class="col-12"><span class="form-label d-block" id="rateLbl">Your rating</span>
+                    <div class="col-12">
+                        <span class="form-label d-block" id="rateLbl">Your rating</span>
                         <div class="stars-in" id="rvStars" role="radiogroup" aria-labelledby="rateLbl"></div>
                         <div id="rateErr" class="form-err" hidden>Choose a star rating.</div>
                     </div>
-                    <div class="col-12"><label class="form-label" for="rvCountry">Country</label><input id="rvCountry"
-                            class="form-control" required>
+                    <div class="col-12">
+                        <label class="form-label" for="rvCountry">Country</label>
+                        <input id="rvCountry" class="form-control" required>
                         <div class="invalid-feedback">Enter your country.</div>
                     </div>
-                    <div class="col-12"><label class="form-label" for="rvText">Your review</label><textarea id="rvText"
-                            class="form-control" rows="4" required minlength="20" maxlength="500"></textarea>
+                    <div class="col-12">
+                        <label class="form-label" for="rvText">Your review</label>
+                        <textarea id="rvText" class="form-control" rows="4" required minlength="20"
+                            maxlength="500"></textarea>
                         <div class="invalid-feedback">Write at least 20 characters.</div>
                     </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-light"
-                        data-bs-dismiss="modal">Cancel</button><button class="btn btn-cta">Post review</button></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-cta">Post review</button>
+                </div>
             </form>
         </div>
     </div>
+
+    <!-- Toast Notification -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="toast" class="toast align-items-center text-bg-dark border-0" role="status" aria-live="polite">
             <div class="d-flex">
-                <div id="toastMsg" class="toast-body"></div><button class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast" aria-label="Close"></button>
+                <div id="toastMsg" class="toast-body"></div>
+                <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/asset/js/users.js"></script>
 </body>
