@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+// Check if user is logged in, if not redirect to login page
+if (!isset($_SESSION['user_logged']) || $_SESSION['user_logged'] !== true) {
+    header("Location: ../loging/singin.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -68,7 +78,7 @@
                     <div class="panel">
                         <div id="bookDone" hidden></div>
                         <form id="bookForm" class="row g-3" novalidate>
-                            
+
                             <div class="col-md-6">
                                 <label class="form-label" for="bName">Full name</label>
                                 <input id="bName" name="name" class="form-control" required minlength="2">
