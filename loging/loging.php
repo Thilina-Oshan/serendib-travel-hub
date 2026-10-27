@@ -104,6 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div id="loginError" class="text-danger text-center mt-3 small fw-semibold"><?php echo $error; ?></div>
                             <?php endif; ?>
                         </form>
+                        <div class="text-center mt-4">
+                            <a href="/loging/singin.php" class="text-decoration-none text-muted small">
+                                <i class="fa-solid fa-arrow-left me-1"></i> Sing In
+                            </a>
+                        </div>
                     </div>
                 </div>
 

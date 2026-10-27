@@ -3,7 +3,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // Function to load dynamic HTML components like navbar and footer
-async function loadComponent(elementId, filePath) {
+/* async function loadComponent(elementId, filePath) {
   try {
     const response = await fetch(filePath);
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadComponent('navbar-container', '/include/navbar.html');
   loadComponent('footer-container', '/include/footer.html');
 });
-
+ */
 /* ---------- Navbar scroll effect ---------- */
 window.addEventListener('scroll', () => {
   const navbarEl = $('#nav');
