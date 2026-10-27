@@ -1,8 +1,5 @@
 /* Sign in / sign up / forgot password.
-   Field names match your database columns: u_fname, u_contact, u_password.
-   CORE below is demo storage (localStorage). To go live, replace each Auth.* function body with a fetch() to your
-   server, e.g. fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u_fname,u_contact,u_password})}).
-   Passwords must be hashed on the server (bcrypt/argon2) and reset codes sent by SMS from the server. */
+   Database-driven via PHP backend for sign in, with client-side enhancements. */
 
 const Auth = (() => {
     const read = (s, k, d) => { try { return JSON.parse(s.getItem(k)) ?? d; } catch { return d; } };
@@ -59,7 +56,7 @@ const Auth = (() => {
             if (!users().some(u => u.u_contact === c)) return { ok: true };
             const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
             otp[c] = { code, exp: now() + OTP_TTL, sent: now(), tries: 0 }; write(localStorage, 'esl_auth_otp', otp);
-            return { ok: true, demoCode: code }; // demoCode is for this demo only; a server sends it by SMS and never returns it
+            return { ok: true, demoCode: code };
         },
         /* Step 2: verify code, set new password */
         async resetPassword({ u_contact, code, u_password }) {
@@ -89,46 +86,35 @@ if (typeof document !== 'undefined') (() => {
         PANELS.forEach(p => $('#p-' + p).hidden = p !== id);
         $('#tabs').hidden = id === 'forgot' || id === 'done';
         ['signin', 'signup'].forEach(t => { $('#tab-' + t).classList.toggle('active', t === id); $('#tab-' + t).setAttribute('aria-selected', t === id); });
-        $$('.is-invalid').forEach(i => i.classList.remove('is-invalid')); $$('.alert').forEach(a => a.hidden = true);
+        $$('.is-invalid').forEach(i => i.classList.remove('is-invalid')); $$('.alert').forEach(a => { if (a.id !== 'siErr') a.hidden = true; });
         if (id === 'forgot') resetStep(1);
         if (id !== 'done') setTimeout(() => $('#p-' + id + ' input')?.focus(), 50);
         if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
     }
-    const route = () => { const u = Auth.current(); u ? done(u) : show(location.hash.slice(1)); };
-    function done(u) { $('#dName').textContent = u.u_fname.split(' ')[0]; $('#dContact').textContent = u.u_contact; show('done'); }
-    addEventListener('hashchange', () => { if (!Auth.current()) show(location.hash.slice(1)); });
+    const route = () => { show(location.hash.slice(1)); };
+    addEventListener('hashchange', () => { show(location.hash.slice(1)); });
     document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) show(g.dataset.go); });
 
     /* Field helpers */
     const bad = (input, msg) => { input.classList.add('is-invalid'); input.parentElement.querySelector('.invalid-feedback').textContent = msg; input.focus(); return false; };
     document.addEventListener('input', e => e.target.classList?.remove('is-invalid'));
-    const alertBox = (el, msg, type = 'danger') => { el.className = `alert alert-${type}`; el.textContent = msg; el.hidden = false; };
+    const alertBox = (el, msg, type = 'danger') => { if (!el) return; el.className = `alert alert-${type}`; el.textContent = msg; el.hidden = false; };
     const busy = (btn, on, label) => { btn.disabled = on; btn.innerHTML = on ? '<span class="spinner-border spinner-border-sm me-2"></span>Please wait…' : label; };
     $$('.pw-toggle').forEach(b => b.addEventListener('click', () => { const i = $(b.dataset.target); i.type = i.type === 'password' ? 'text' : 'password'; b.textContent = i.type === 'password' ? 'Show' : 'Hide'; b.setAttribute('aria-label', i.type === 'password' ? 'Show password' : 'Hide password'); }));
 
     /* Password strength meters */
     const LABELS = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'], COLORS = ['bg-danger', 'bg-danger', 'bg-warning', 'bg-info', 'bg-success'];
     function meter(inputSel, barSel, labelSel) {
-        $(inputSel).addEventListener('input', e => {
+        $(inputSel)?.addEventListener('input', e => {
             const v = e.target.value, s = v ? Auth.score(v) : -1, bar = $(barSel);
-            bar.style.width = v ? (s + 1) * 20 + '%' : '0'; bar.className = 'progress-bar ' + (COLORS[s] || '');
+            if (bar) { bar.style.width = v ? (s + 1) * 20 + '%' : '0'; bar.className = 'progress-bar ' + (COLORS[s] || ''); }
             if (labelSel) $(labelSel).textContent = v ? `Strength: ${LABELS[s]}` : '';
         });
     }
     meter('#su_password', '#suBar', '#suLabel'); meter('#rs_password', '#rsBar');
 
-    /* Sign in */
-    $('#signinForm').addEventListener('submit', async e => {
-        e.preventDefault(); const f = e.target, b = $('button[type=submit]', f); $('#siErr').hidden = true;
-        if (!Auth.validContact(f.u_contact.value)) return bad(f.u_contact, 'Enter a valid contact number.');
-        if (!f.u_password.value) return bad(f.u_password, 'Enter your password.');
-        busy(b, true); const r = await Auth.signIn({ u_contact: f.u_contact.value, u_password: f.u_password.value, remember: $('#si_remember').checked }); busy(b, false, 'Sign in');
-        if (!r.ok) return alertBox($('#siErr'), r.error);
-        f.reset(); toast('Signed in.'); done(r.user);
-    });
-
     /* Sign up */
-    $('#signupForm').addEventListener('submit', async e => {
+    $('#signupForm')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.target, b = $('button[type=submit]', f); $('#suErr').hidden = true;
         if (!Auth.validName(f.u_fname.value)) return bad(f.u_fname, 'Enter your full name (letters only).');
         if (!Auth.validContact(f.u_contact.value)) return bad(f.u_contact, 'Enter a valid contact number, e.g. 0771234567.');
@@ -136,14 +122,14 @@ if (typeof document !== 'undefined') (() => {
         if (f.u_password.value !== f.confirm.value) return bad(f.confirm, 'Passwords do not match.');
         busy(b, true); const r = await Auth.signUp({ u_fname: f.u_fname.value, u_contact: f.u_contact.value, u_password: f.u_password.value }); busy(b, false, 'Create account');
         if (!r.ok) { const el = { u_fname: f.u_fname, u_contact: f.u_contact, u_password: f.u_password }[r.field]; return el ? bad(el, r.error) : alertBox($('#suErr'), r.error); }
-        f.reset(); $('#suBar').style.width = '0'; $('#suLabel').textContent = ''; toast('Account created. Welcome!'); done(r.user);
+        f.reset(); $('#suBar').style.width = '0'; $('#suLabel').textContent = ''; toast('Account created. Welcome!');
     });
 
     /* Forgot password */
     let resetContact = '', cool = null;
     function resetStep(n) { $('#forgotForm').hidden = n !== 1; $('#resetForm').hidden = n !== 2; $('#fpMsg').hidden = true; clearInterval(cool); }
     function cooldown() {
-        const b = $('#resend'); let s = 30; b.disabled = true; clearInterval(cool);
+        const b = $('#resend'); let s = 30; if (!b) return; b.disabled = true; clearInterval(cool);
         cool = setInterval(() => { s--; b.textContent = s > 0 ? `Resend code in ${s}s` : 'Resend code'; if (s <= 0) { b.disabled = false; clearInterval(cool); } }, 1000); b.textContent = `Resend code in ${s}s`;
     }
     function sendCode(contact, fromResend) {
@@ -155,13 +141,13 @@ if (typeof document !== 'undefined') (() => {
             : 'If this number is registered, a code has been sent. It expires in 5 minutes.', 'info');
         cooldown(); $('#rs_code').focus(); if (fromResend) toast('A new code was sent.');
     }
-    $('#forgotForm').addEventListener('submit', e => {
+    $('#forgotForm')?.addEventListener('submit', e => {
         e.preventDefault(); const f = e.target;
         if (!Auth.validContact(f.u_contact.value)) return bad(f.u_contact, 'Enter a valid contact number.');
         sendCode(f.u_contact.value, false);
     });
-    $('#resend').addEventListener('click', () => sendCode(resetContact, true));
-    $('#resetForm').addEventListener('submit', async e => {
+    $('#resend')?.addEventListener('click', () => sendCode(resetContact, true));
+    $('#resetForm')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.target, b = $('button[type=submit]', f);
         if (!/^\d{6}$/.test(f.code.value.trim())) return bad(f.code, 'Enter the 6-digit code.');
         if (!Auth.validPassword(f.u_password.value)) return bad(f.u_password, 'Use 8+ characters with letters and numbers.');
@@ -169,9 +155,7 @@ if (typeof document !== 'undefined') (() => {
         busy(b, true); const r = await Auth.resetPassword({ u_contact: resetContact, code: f.code.value, u_password: f.u_password.value }); busy(b, false, 'Reset password');
         if (!r.ok) return bad({ code: f.code, u_password: f.u_password }[r.field] || f.code, r.error);
         f.reset(); $('#rsBar').style.width = '0'; show('signin'); toast('Password updated. Please sign in.');
-        $('#si_contact').value = resetContact;
     });
 
-    $('#signout').addEventListener('click', () => { Auth.signOut(); show('signin'); toast('Signed out.'); });
     route();
 })();
