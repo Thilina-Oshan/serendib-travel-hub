@@ -36,7 +36,41 @@ try {
 <body>
 
   <!-- NAVBAR CONTAINER -->
-  <div id="navbar-container"></div>
+  <div id="navbar-container">
+    <nav id="nav" class="navbar navbar-expand-lg fixed-top custom-nav">
+  <div class="container">
+    <!-- Brand Logo / Title -->
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#home">
+      <span class="brand-icon">🇱🇰</span>
+      <span class="brand-text">Explore Sri Lanka</span>
+    </a>
+
+    <!-- Mobile Menu Toggle Button -->
+    <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+      aria-controls="menu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navigation Links Container -->
+    <div id="menu" class="collapse navbar-collapse">
+      <ul class="navbar-nav mx-auto align-items-lg-center gap-lg-1">
+        <li class="nav-item"><a class="nav-link active" href="#home">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#destinations">Top Attractions</a></li>
+        <li class="nav-item"><a class="nav-link" href="#season">Weather &amp; Season</a></li>
+        <li class="nav-item"><a class="nav-link" href="#experiences">Experiences</a></li>
+        <li class="nav-item"><a class="nav-link" href="#planner">Itinerary Planner</a></li>
+        <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+      </ul>
+
+      <!-- Action Buttons Area -->
+      <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+        <a href="/loging/singin.php" class="btn btn-outline-light btn-login">Login</a>
+        <a href="/users/users.php" class="btn btn-cta">Book Tour</a>
+      </div>
+    </div>
+  </div>
+</nav>
+  </div>
 
   <!-- HERO -->
   <header id="home" class="hero">
@@ -267,6 +301,50 @@ try {
       </div>
     </div>
   </div>
+
+  <footer id="contact" class="footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <h3>Explore Sri Lanka 🇱🇰</h3>
+        <p>Plan with local knowledge. Travel at your own pace.</p>
+        <form id="newsForm" class="input-group">
+          <input type="email" class="form-control" placeholder="Your email" aria-label="Email" required>
+          <button class="btn btn-cta">Subscribe</button>
+        </form>
+        <p id="newsMsg" class="small mt-2 mb-0"></p>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h4>Quick links</h4>
+        <ul class="list-unstyled">
+          <li><a href="#destinations">Attractions</a></li>
+          <li><a href="#season">Season guide</a></li>
+          <li><a href="#planner">Planner</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-3">
+        <h4>Tourist hotlines</h4>
+        <ul class="list-unstyled">
+          <li>Police emergency: <strong>119</strong></li>
+          <li>Ambulance: <strong>1990</strong></li>
+          <li>Tourism hotline: <strong>1912</strong></li>
+          <li>Tourist Police: <strong>011 242 1052</strong></li>
+        </ul>
+      </div>
+      <div class="col-lg-3">
+        <h4>Follow</h4>
+        <div class="d-flex gap-2">
+          <a class="soc" href="#" aria-label="Facebook">f</a>
+          <a class="soc" href="#" aria-label="Instagram">ig</a>
+          <a class="soc" href="#" aria-label="YouTube">yt</a>
+          <a class="soc" href="#" aria-label="X">x</a>
+        </div>
+      </div>
+    </div>
+    <p class="copy">© <span id="yr"></span> Explore Sri Lanka. Demo project; confirm numbers with official sources before travel.</p>
+  </div>
+</footer>
 
   <!-- Pass PHP database results into JavaScript window object -->
   <script>
